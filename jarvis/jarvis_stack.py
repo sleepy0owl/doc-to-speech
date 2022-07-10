@@ -5,7 +5,7 @@ from aws_cdk import (
 )
 import aws_cdk
 from constructs import Construct
-from aws_cdk import aws_s3, aws_lambda, aws_lambda_event_sources
+from aws_cdk import aws_s3, aws_lambda, aws_lambda_event_sources, aws_iam
 
 class JarvisStack(Stack):
 
@@ -30,5 +30,19 @@ class JarvisStack(Stack):
                 bucket=self.command_bucket,
                 events=[aws_s3.EventType.OBJECT_CREATED],
                 filters=[aws_s3.NotificationKeyFilter(prefix='files/')]
+            )
+        )
+
+        self.text_processor_lambda.add_to_role_policy(
+            statement=aws_iam.PolicyStatement(
+                actions=["s3:GetObject", "s3:PutObject"],
+                resources=[f"{self.command_bucket.bucket_arn}/*"]
+            )
+        )
+
+        self.text_processor_lambda.add_to_role_policy(
+            statement=aws_iam.PolicyStatement(
+                actions=["polly:SynthesizeSpeech"],
+                resources=["*"]
             )
         )
