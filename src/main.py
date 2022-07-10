@@ -12,6 +12,7 @@ def handler(event, context):
             Key=key
         )
 
+        file_name = key.split('.')[0]
         data = response['Body'].read().decode('utf-8')
 
         polly_client = boto3.client('polly')
@@ -23,10 +24,12 @@ def handler(event, context):
             SampleRate="16000"
         )
         audio_stream = response['AudioStream'].read()
-        with open(f'{key}-t2s.mp3', 'wb') as file:
-            file.write(audio_stream)
 
-        
+        response = s3_client.put_object(
+            Body=audio_stream,
+            Bucket=bucket_name,
+            Key=f"speech-{file_name}.mp3"
+        )
     except Exception as e:
         # write to sns topic
         print(e)
