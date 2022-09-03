@@ -1,3 +1,4 @@
+import os
 import boto3
 
 def handler(event, context):
@@ -17,18 +18,17 @@ def handler(event, context):
 
         polly_client = boto3.client('polly')
 
-        response = polly_client.synthesize_speech(
+        output_bucket_name = os.environ.get('OUTPUTBUCKET')
+        sns_topic_arn = os.environ.get('SNSTOPICARN')
+        response = polly_client.start_speech_synthesis_task(
+            Engine='standard',
             Text=data,
             OutputFormat="mp3",
             VoiceId="Joanna",
-            SampleRate="16000"
-        )
-        audio_stream = response['AudioStream'].read()
-
-        response = s3_client.put_object(
-            Body=audio_stream,
-            Bucket=bucket_name,
-            Key=f"speech-{file_name}.mp3"
+            SampleRate="16000",
+            OutputS3BucketName=output_bucket_name,
+            OutputS3KeyPrefix='audio/',
+            SnsTopicArn=sns_topic_arn
         )
     except Exception as e:
         # write to sns topic
